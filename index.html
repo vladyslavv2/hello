@@ -1,56 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Python Chatbot</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f3f3f3; margin: 0; padding: 20px; }
-    #chat-box { background: white; border-radius: 8px; padding: 10px; max-width: 600px; margin: auto; height: 400px; overflow-y: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
-    .msg { margin: 8px 0; }
-    .user { color: #0066cc; }
-    .bot { color: #009933; }
-    #input-area { text-align: center; margin-top: 10px; }
-    input { width: 70%; padding: 8px; }
-    button { padding: 8px 16px; margin-left: 6px; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    #chat-box {
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      overflow-y: auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 80%;
+      line-height: 1.4em;
+    }
+    .user {
+      background: #0078ff;
+      color: white;
+      margin-left: auto;
+    }
+    .bot {
+      background: #e5e5ea;
+      color: black;
+      margin-right: auto;
+    }
+    #input-box {
+      display: flex;
+      width: 100%;
+      max-width: 600px;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #005fcc;
+    }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">💬 Chatbot на Python</h2>
+  <h1>🤖 Мій чат-бот</h1>
+
   <div id="chat-box"></div>
-  <div id="input-area">
-    <input id="user-input" placeholder="Напишіть повідомлення..." />
-    <button id="send-btn">Відправити</button>
+
+  <div id="input-box">
+    <input type="text" id="user-input" placeholder="Введіть повідомлення..." />
+    <button onclick="sendMessage()">Надіслати</button>
   </div>
 
-<script>
-<script>
-async function sendMessage() {
-  const input = document.getElementById("user-input");
-  const chat = document.getElementById("chat");
-  const message = input.value.trim();
-  if (!message) return;
+  <script>
+    const backend = "https://vladyslavv2.pythonanywhere.com/chat";
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
 
-  // показуємо повідомлення користувача
-  chat.innerHTML += `<div><b>Ви:</b> ${message}</div>`;
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-  try {
-    const res = await fetch("https://vladyslavv2.pythonanywhere.com/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      userInput.value = "";
+
+      try {
+        const res = await fetch(backend, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+
+        const replyText = await res.text();
+        let reply = "⚠️ Сервер не повернув JSON.";
+        try {
+          const data = JSON.parse(replyText);
+          reply = data.reply || "🤖 Без відповіді...";
+        } catch {
+          console.error("Не JSON:", replyText);
+        }
+
+        addMessage(reply, "bot");
+      } catch (error) {
+        console.error("Помилка fetch:", error);
+        addMessage("❌ Помилка з'єднання з сервером.", "bot");
+      }
+    }
+
+    // Відправка повідомлення клавішею Enter
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
     });
-
-    const data = await res.json();
-    chat.innerHTML += `<div><b>Бот:</b> ${data.reply}</div>`;
-  } catch (err) {
-    chat.innerHTML += `<div style="color:red"><b>Помилка:</b> Не вдалося зв’язатися з сервером 😢</div>`;
-  }
-
-  input.value = "";
-}
-</script>
-
-</script>
+  </script>
 </body>
 </html>
