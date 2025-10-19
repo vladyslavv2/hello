@@ -24,35 +24,33 @@
   </div>
 
 <script>
-const backend = "https://vladyslavv2.pythonanywhere.com/chat";
-
-function addMessage(sender, text) {
-  const div = document.createElement("div");
-  div.className = "msg " + sender;
-  div.textContent = (sender === "user" ? "Ви: " : "Бот: ") + text;
-  document.getElementById("chat-box").appendChild(div);
-  document.getElementById("chat-box").scrollTop = 999999;
-}
-
-document.getElementById("send-btn").onclick = async () => {
+<script>
+async function sendMessage() {
   const input = document.getElementById("user-input");
-  const msg = input.value.trim();
-  if (!msg) return;
-  addMessage("user", msg);
-  input.value = "";
+  const chat = document.getElementById("chat");
+  const message = input.value.trim();
+  if (!message) return;
+
+  // показуємо повідомлення користувача
+  chat.innerHTML += `<div><b>Ви:</b> ${message}</div>`;
 
   try {
-    const res = await fetch(backend, {
+    const res = await fetch("https://vladyslavv2.pythonanywhere.com/chat", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({message: msg})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
     });
+
     const data = await res.json();
-    addMessage("bot", data.reply);
+    chat.innerHTML += `<div><b>Бот:</b> ${data.reply}</div>`;
   } catch (err) {
-    addMessage("bot", "Помилка зв’язку з сервером 😢");
+    chat.innerHTML += `<div style="color:red"><b>Помилка:</b> Не вдалося зв’язатися з сервером 😢</div>`;
   }
-};
+
+  input.value = "";
+}
+</script>
+
 </script>
 </body>
 </html>
